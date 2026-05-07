@@ -1,111 +1,65 @@
-# =============================================================
-# nav2_params.yaml — tuned for patrol_robot
-#
-# Key robot specs (from URDF):
-#   base:           0.7L x 0.4W x 0.2H  (circumscribed radius ~0.404m)
-#   wheel_radius:   0.1 m
-#   wheel_sep:      0.38 m
-#   max wheel vel:  5.0 rad/s  →  max linear = 0.5 m/s
-#   max lin accel:  2.0 m/s²   (from diff-drive plugin)
-#   lidar range:    0.35 – 12.0 m, 360°, 20 Hz, on lidar_link
-#   frames:         base_footprint / base_link / odom / map
-# =============================================================
+map_server_keepout:
+  ros__parameters:
+    yaml_filename: "keepout_mask.yaml"
+    topic_name: "keepout_filter_mask"
+    autostart: true
+    use_sim_time: true
+
+costmap_filter_info_server:
+  ros__parameters:
+    type: 0
+    filter_info_topic: "costmap_filter_info"
+    mask_topic: "keepout_filter_mask"
+    autostart: true
+    use_sim_time: true
 
 
-# ---------------------------------------------------------------
-# Keepout filter (unchanged — world-specific, not robot-specific)
-# ---------------------------------------------------------------
-# map_server_keepout:
-#   ros__parameters:
-#     yaml_filename: "keepout_mask.yaml"
-#     topic_name: "keepout_filter_mask"
-#     autostart: true
-#     use_sim_time: true
-
-# costmap_filter_info_server:
-#   ros__parameters:
-#     type: 0
-#     filter_info_topic: "costmap_filter_info"
-#     mask_topic: "keepout_filter_mask"
-#     autostart: true
-#     use_sim_time: true
-
-
-# ---------------------------------------------------------------
-# AMCL
-# ---------------------------------------------------------------
 amcl:
   ros__parameters:
-    use_sim_time: true
     set_initial_pose: true
     initial_pose_x: 0.0
     initial_pose_y: 0.0
     initial_pose_yaw: 0.0
-
-    # Motion model noise for a differential-drive robot
-    alpha1: 0.2   # rot noise from rot
-    alpha2: 0.2   # rot noise from trans
-    alpha3: 0.2   # trans noise from trans
-    alpha4: 0.2   # trans noise from rot
-    alpha5: 0.2   # (unused for diff-drive model but required by schema)
-
-    # Frames — must match URDF exactly
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
     base_frame_id: "base_footprint"
-    global_frame_id: "map"
-    odom_frame_id: "odom"
-
-    # Beam skipping
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
     do_beamskip: false
-
+    global_frame_id: "map"
     lambda_short: 0.1
     laser_likelihood_max_dist: 2.0
-
-    # Lidar range — matches URDF: min=0.35, max=12.0
     laser_max_range: 12.0
     laser_min_range: -1.0
-
     laser_model_type: "likelihood_field"
-
-    # 60 beams out of 360 is sufficient for AMCL performance
     max_beams: 60
-
-    # Particle filter
     max_particles: 2000
     min_particles: 500
+    odom_frame_id: "odom"
     pf_err: 0.05
     pf_z: 0.99
     recovery_alpha_fast: 0.0
     recovery_alpha_slow: 0.0
     resample_interval: 1
-
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true
     transform_tolerance: 1.0
-
-    # Update thresholds
     update_min_a: 0.2
     update_min_d: 0.25
-
-    # Sensor model weights
     z_hit: 0.5
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
-
     scan_topic: scan
 
-
-# ---------------------------------------------------------------
-# BT Navigator
-# ---------------------------------------------------------------
 bt_navigator:
   ros__parameters:
-    use_sim_time: true
     global_frame: map
     robot_base_frame: base_link
     odom_topic: /odom
@@ -118,65 +72,65 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
+    # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
+    # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
+    # nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml
+    # They can be set here or via a RewrittenYaml remap from a parent launch file to Nav2.
+
+    # plugin_lib_names is used to add custom BT plugins to the executor (vector of strings).
+    # Built-in plugins are added automatically
+    # plugin_lib_names: []
+
     error_code_names:
       - compute_path_error_code
       - follow_path_error_code
 
-
-# ---------------------------------------------------------------
-# Controller Server (MPPI — DiffDrive)
-# ---------------------------------------------------------------
 controller_server:
   ros__parameters:
-    use_sim_time: true
-    controller_frequency: 20.0        # matches lidar update_rate: 20
+    controller_frequency: 20.0
     costmap_update_timeout: 0.30
     min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5     # diff-drive: no lateral motion
+    min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugins: ["progress_checker"]
-    goal_checker_plugins: ["general_goal_checker"]
+    goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
     controller_plugins: ["FollowPath"]
     use_realtime_priority: false
 
+    # Progress checker parameters
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
       required_movement_radius: 0.5
       movement_time_allowance: 10.0
-
+    # Goal checker parameters
+    #precise_goal_checker:
+    #  plugin: "nav2_controller::SimpleGoalChecker"
+    #  xy_goal_tolerance: 0.25
+    #  yaw_goal_tolerance: 0.25
+    #  stateful: True
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
-
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
       model_dt: 0.05
       batch_size: 2000
-
-      # Acceleration limits — from URDF max_linear_acceleration: 2.0
-      ax_max: 2.0
-      ax_min: -2.0
-      ay_max: 2.0        # diff-drive won't use lateral but MPPI needs the field
-      ay_min: -2.0
-      az_max: 3.2        # angular accel limit (rad/s²)
-
-      # Sampling noise
+      ax_max: 3.0
+      ax_min: -3.0
+      ay_max: 3.0
+      ay_min: -3.0
+      az_max: 3.5
       vx_std: 0.2
-      vy_std: 0.0        # zero lateral noise for diff-drive
+      vy_std: 0.2
       wz_std: 0.4
-
-      # Velocity limits
-      # max linear: wheel_velocity(5.0 rad/s) * wheel_radius(0.1m) = 0.5 m/s
       vx_max: 0.5
-      vx_min: -0.25      # limited reversing for recovery
-      vy_max: 0.0        # non-holonomic: no lateral velocity
-      # max angular: (2 * vx_max) / wheel_separation = 1.0 / 0.38 ≈ 2.63 rad/s → cap at 1.9
+      vx_min: -0.35
+      vy_max: 0.5
       wz_max: 1.9
-
       iteration_count: 1
       prune_distance: 1.7
       transform_tolerance: 0.1
@@ -185,53 +139,44 @@ controller_server:
       motion_model: "DiffDrive"
       visualize: true
       regenerate_noises: true
-
       TrajectoryVisualizer:
         trajectory_step: 5
         time_step: 3
-
       AckermannConstraints:
-        min_turning_r: 0.2  # not used by DiffDrive; kept for schema
-
+        min_turning_r: 0.2
       critics: [
         "ConstraintCritic", "CostCritic", "GoalCritic",
         "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
         "PathAngleCritic", "PreferForwardCritic"]
-
       ConstraintCritic:
         enabled: true
         cost_power: 1
         cost_weight: 4.0
-
       GoalCritic:
         enabled: true
         cost_power: 1
         cost_weight: 5.0
         threshold_to_consider: 1.4
-
       GoalAngleCritic:
         enabled: true
         cost_power: 1
         cost_weight: 3.0
         threshold_to_consider: 0.5
-
       PreferForwardCritic:
         enabled: true
         cost_power: 1
         cost_weight: 5.0
         threshold_to_consider: 0.5
-
       CostCritic:
         enabled: true
         cost_power: 1
         cost_weight: 3.81
         near_collision_cost: 253
         critical_cost: 300.0
-        consider_footprint: false      # uses actual 0.7x0.4 footprint shape
+        consider_footprint: false
         collision_cost: 1000000.0
         near_goal_distance: 1.0
         trajectory_point_step: 2
-
       PathAlignCritic:
         enabled: true
         cost_power: 1
@@ -241,14 +186,12 @@ controller_server:
         threshold_to_consider: 0.5
         offset_from_furthest: 20
         use_path_orientations: false
-
       PathFollowCritic:
         enabled: true
         cost_power: 1
         cost_weight: 5.0
         offset_from_furthest: 5
         threshold_to_consider: 1.4
-
       PathAngleCritic:
         enabled: true
         cost_power: 1
@@ -257,37 +200,28 @@ controller_server:
         threshold_to_consider: 0.5
         max_angle_to_furthest: 1.0
         mode: 0
+      # TwirlingCritic:
+      #   enabled: true
+      #   twirling_cost_power: 1
+      #   twirling_cost_weight: 10.0
 
-
-# ---------------------------------------------------------------
-# Local Costmap
-# ---------------------------------------------------------------
 local_costmap:
   local_costmap:
     ros__parameters:
-      use_sim_time: true
-      update_frequency: 20.0          # matches lidar update_rate: 20
-      publish_frequency: 5.0
+      update_frequency: 5.0
+      publish_frequency: 2.0
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-
-      # Window size slightly larger than robot length (0.7m)
-      width: 4
-      height: 4
+      width: 3
+      height: 3
       resolution: 0.05
-
-      # Circumscribed radius: sqrt(0.35^2 + 0.2^2) = 0.404m → 0.41m
-      robot_radius: 0.41
-
+      robot_radius: 0.32
       plugins: ["voxel_layer", "inflation_layer"]
-
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        # inflation_radius > robot_radius gives ~0.14m buffer
-        inflation_radius: 0.55
-
+        inflation_radius: 0.70
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -304,44 +238,31 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          # Conservative local ranges for reactive obstacle avoidance
           raytrace_max_range: 3.0
-          raytrace_min_range: 0.35    # matches lidar range min
+          raytrace_min_range: 0.35
           obstacle_max_range: 2.5
           obstacle_min_range: 0.35
-
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
-
       always_send_full_costmap: True
 
-
-# ---------------------------------------------------------------
-# Global Costmap
-# ---------------------------------------------------------------
 global_costmap:
   global_costmap:
     ros__parameters:
-      use_sim_time: true
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_footprint
-
-      # Same circumscribed radius as local costmap
-      robot_radius: 0.41
-
+      robot_base_frame: base_link
+      robot_radius: 0.32
       resolution: 0.05
       track_unknown_space: true
-
       plugins: ["static_layer", "obstacle_layer", "inflation_layer", "keepout_filter"]
-
       keepout_filter:
         plugin: "nav2_costmap_2d::KeepoutFilter"
         enabled: True
         filter_info_topic: "/costmap_filter_info"
-
+        
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -352,42 +273,35 @@ global_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          # Use full lidar range for global map building
           raytrace_max_range: 3.0
           raytrace_min_range: 0.35
           obstacle_max_range: 2.5
           obstacle_min_range: 0.35
-
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
-
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.55
-
+        inflation_radius: 0.7
       always_send_full_costmap: True
 
+# The yaml_filename does not need to be specified since it going to be set by defaults in launch.
+# If you'd rather set it in the yaml, remove the default "map" value in the tb3_simulation_launch.py
+# file & provide full path to map below. If CLI map configuration or launch default is provided, that will be used.
+# map_server:
+#   ros__parameters:
+#     yaml_filename: ""
 
-# ---------------------------------------------------------------
-# Map Saver
-# ---------------------------------------------------------------
 map_saver:
   ros__parameters:
-    use_sim_time: true
     save_map_timeout: 5.0
     free_thresh_default: 0.25
     occupied_thresh_default: 0.65
     map_subscribe_transient_local: True
 
-
-# ---------------------------------------------------------------
-# Planner Server
-# ---------------------------------------------------------------
 planner_server:
   ros__parameters:
-    use_sim_time: true
     expected_planner_frequency: 20.0
     planner_plugins: ["GridBased"]
     costmap_update_timeout: 1.0
@@ -397,13 +311,8 @@ planner_server:
       use_astar: false
       allow_unknown: true
 
-
-# ---------------------------------------------------------------
-# Smoother Server
-# ---------------------------------------------------------------
 smoother_server:
   ros__parameters:
-    use_sim_time: true
     smoother_plugins: ["simple_smoother"]
     simple_smoother:
       plugin: "nav2_smoother::SimpleSmoother"
@@ -411,13 +320,8 @@ smoother_server:
       max_its: 1000
       do_refinement: True
 
-
-# ---------------------------------------------------------------
-# Behavior Server
-# ---------------------------------------------------------------
 behavior_server:
   ros__parameters:
-    use_sim_time: true
     local_costmap_topic: local_costmap/costmap_raw
     global_costmap_topic: global_costmap/costmap_raw
     local_footprint_topic: local_costmap/published_footprint
@@ -439,18 +343,12 @@ behavior_server:
     robot_base_frame: base_link
     transform_tolerance: 0.1
     simulate_ahead_time: 2.0
-    # Rotational limits consistent with wz_max in MPPI
-    max_rotational_vel: 1.9
+    max_rotational_vel: 1.0
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.2
 
-
-# ---------------------------------------------------------------
-# Waypoint Follower
-# ---------------------------------------------------------------
 waypoint_follower:
   ros__parameters:
-    use_sim_time: true
     loop_rate: 20
     stop_on_failure: false
     action_server_result_timeout: 900.0
@@ -460,13 +358,12 @@ waypoint_follower:
       enabled: True
       waypoint_pause_duration: 200
 
-
-# ---------------------------------------------------------------
-# Route Server
-# ---------------------------------------------------------------
 route_server:
   ros__parameters:
-    use_sim_time: true
+    # The graph_filepath does not need to be specified since it going to be set by defaults in launch.
+    # If you'd rather set it in the yaml, remove the default "graph" value in the launch file(s).
+    # file & provide full path to map below. If graph config or launch default is provided, it is used
+    # graph_filepath: $(find-pkg-share nav2_route)/graphs/aws_graph.geojson
     boundary_radius_to_achieve_node: 1.0
     radius_to_achieve_node: 2.0
     smooth_corners: true
@@ -484,34 +381,22 @@ route_server:
     CostmapScorer:
       plugin: "nav2_route::CostmapScorer"
 
-
-# ---------------------------------------------------------------
-# Velocity Smoother
-# ---------------------------------------------------------------
 velocity_smoother:
   ros__parameters:
-    use_sim_time: true
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    # [linear_x, linear_y, angular_z] — consistent with MPPI limits above
-    max_velocity: [0.5, 0.0, 1.9]
-    min_velocity: [-0.25, 0.0, -1.9]
-    # max_linear_acceleration: 2.0 from URDF diff-drive plugin
-    max_accel: [2.0, 0.0, 3.2]
-    max_decel: [-2.0, 0.0, -3.2]
+    max_velocity: [0.85, 0.0, 5.0]
+    min_velocity: [-0.85, 0.0, -5.0]
+    max_accel: [2.5, 0.0, 3.2]
+    max_decel: [-2.5, 0.0, -3.2]
     odom_topic: "odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
 
-
-# ---------------------------------------------------------------
-# Collision Monitor
-# ---------------------------------------------------------------
 collision_monitor:
   ros__parameters:
-    use_sim_time: true
     base_frame_id: "base_footprint"
     odom_frame_id: "odom"
     cmd_vel_in_topic: "cmd_vel_smoothed"
@@ -521,6 +406,8 @@ collision_monitor:
     source_timeout: 1.0
     base_shift_correction: True
     stop_pub_timeout: 2.0
+    # Polygons represent zone around the robot for "stop", "slowdown" and "limit" action types,
+    # and robot footprint for "approach" action type.
     polygons: ["FootprintApproach"]
     FootprintApproach:
       type: "polygon"
@@ -535,18 +422,12 @@ collision_monitor:
     scan:
       type: "scan"
       topic: "scan"
-      # lidar_link is at base_joint_z(0.05) + lidar_z_offset(0.225) = 0.275m above ground
       min_height: 0.15
       max_height: 2.0
       enabled: True
 
-
-# ---------------------------------------------------------------
-# Docking Server
-# ---------------------------------------------------------------
 docking_server:
   ros__parameters:
-    use_sim_time: true
     controller_frequency: 50.0
     initial_perception_timeout: 5.0
     wait_charge_timeout: 5.0
@@ -558,14 +439,17 @@ docking_server:
     fixed_frame: "odom"
     dock_backwards: false
     dock_prestaging_tolerance: 0.5
+
+    # Types of docks
     dock_plugins: ['simple_charging_dock']
     simple_charging_dock:
       plugin: 'opennav_docking::SimpleChargingDock'
       docking_threshold: 0.05
       staging_x_offset: -0.7
       use_external_detection_pose: true
-      use_battery_status: false
-      use_stall_detection: false
+      use_battery_status: false # true
+      use_stall_detection: false # true
+
       external_detection_timeout: 1.0
       external_detection_translation_x: -0.18
       external_detection_translation_y: 0.0
@@ -573,11 +457,20 @@ docking_server:
       external_detection_rotation_pitch: -1.57
       external_detection_rotation_yaw: 0.0
       filter_coef: 0.1
+
+    # Dock instances
+    # The following example illustrates configuring dock instances.
+    # docks: ['home_dock']  # Input your docks here
+    # home_dock:
+    #   type: 'simple_charging_dock'
+    #   frame: map
+    #   pose: [0.0, 0.0, 0.0]
+
     controller:
       k_phi: 3.0
       k_delta: 2.0
       v_linear_min: 0.3
-      v_linear_max: 0.5               # matches vx_max
+      v_linear_max: 0.5
       use_collision_detection: true
       costmap_topic: "local_costmap/costmap_raw"
       footprint_topic: "local_costmap/published_footprint"
@@ -586,20 +479,16 @@ docking_server:
       simulation_step: 0.1
       dock_collision_threshold: 0.3
 
-
-# ---------------------------------------------------------------
-# Loopback Simulator (not used with Gazebo; kept for reference)
-# ---------------------------------------------------------------
 loopback_simulator:
   ros__parameters:
     base_frame_id: "base_footprint"
     odom_frame_id: "odom"
     map_frame_id: "map"
-    scan_frame_id: "lidar_link"       # matches URDF gz_frame_id
+    scan_frame_id: "base_scan"  # tb4_loopback_simulator.launch.py remaps to 'rplidar_link'
     update_duration: 0.02
-    scan_range_min: 0.35              # matches lidar range min
-    scan_range_max: 12.0              # matches lidar range max
-    scan_angle_min: -3.14159265
-    scan_angle_max:  3.14159265
-    scan_angle_increment: 0.01745     # 1° per step in radians (360 samples)
+    scan_range_min: 0.05
+    scan_range_max: 30.0
+    scan_angle_min: -3.1415
+    scan_angle_max: 3.1415
+    scan_angle_increment: 0.02617
     scan_use_inf: true
