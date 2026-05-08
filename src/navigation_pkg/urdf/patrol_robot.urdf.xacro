@@ -9,9 +9,28 @@
   <xacro:property name="wheel_mass"      value="0.8"/>
   <xacro:property name="wheel_radius"    value="0.1"/>
   <xacro:property name="wheel_width"     value="0.05"/>
-  <xacro:property name="wheel_sep"       value="0.45"/>  
+  <xacro:property name="wheel_sep"       value="0.45"/>
+  <xacro:property name="wheel_x_offset"  value="0.1"/>
+
+  <xacro:property name="wheel_damping"   value="0.1"/>
+  <xacro:property name="wheel_friction"  value="0.0"/>
+  <xacro:property name="wheel_effort"    value="10.0"/>
+  <xacro:property name="wheel_velocity"  value="5.0"/>
 
   <xacro:property name="caster_radius"   value="0.04"/>
+  <xacro:property name="caster_mass"     value="0.1"/>
+  <xacro:property name="caster_z"        value="${-(wheel_radius - caster_radius)}"/>
+  <xacro:property name="caster_x_reach"  value="${base_length/2 - 0.06}"/>
+
+  <xacro:property name="lidar_radius"    value="0.04"/>
+  <xacro:property name="lidar_length"    value="0.06"/>
+  <xacro:property name="lidar_mass"      value="0.1"/>
+
+  <xacro:property name="camera_size_x"   value="0.04"/>
+  <xacro:property name="camera_size_y"   value="0.08"/>
+  <xacro:property name="camera_size_z"   value="0.04"/>
+  <xacro:property name="camera_mass"     value="0.05"/>
+
 
   <xacro:macro name="box_inertia" params="m x y z">
     <inertial>
@@ -68,7 +87,7 @@
     <xacro:box_inertia m="${base_mass}" x="${base_length}" y="${base_width}" z="${base_height}"/>
   </link>
 
-  
+
   <xacro:macro name="drive_wheel" params="prefix y_sign">
 
     <link name="${prefix}_wheel">
@@ -84,7 +103,7 @@
       <collision>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
         <geometry>
-          <sphere radius="${wheel_radius}"/>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
       </collision>
       <xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
@@ -93,8 +112,10 @@
     <joint name="${prefix}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child  link="${prefix}_wheel"/>
-      <origin xyz="${-(base_length/2 - 0.1)} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
+      <origin xyz="${-(base_length/2 - wheel_x_offset)} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
+      <dynamics damping="${wheel_damping}" friction="${wheel_friction}"/>
+      <limit effort="${wheel_effort}" velocity="${wheel_velocity}"/>
     </joint>
 
   </xacro:macro>
@@ -118,23 +139,25 @@
           <sphere radius="${caster_radius}"/>
         </geometry>
       </collision>
-      <xacro:sphere_inertia m="0.1" r="${caster_radius}"/>
+      <xacro:sphere_inertia m="${caster_mass}" r="${caster_radius}"/>
     </link>
 
     <joint name="${prefix}_caster_joint" type="fixed">
       <parent link="base_link"/>
       <child  link="${prefix}_caster"/>
-      <origin xyz="${x_pos} 0 ${-(base_height/2 + caster_radius - 0.01)}" rpy="0 0 0"/>
+      <origin xyz="${x_pos} 0 ${caster_z}" rpy="0 0 0"/>
     </joint>
 
   </xacro:macro>
 
-  <xacro:caster prefix="front" x_pos=" ${base_length/2 - 0.06}"/>
+  <xacro:caster prefix="front" x_pos="${caster_x_reach}"/>
+  <xacro:caster prefix="rear"  x_pos="${-caster_x_reach}"/>
+
 
   <link name="lidar_link">
     <visual>
       <geometry>
-        <cylinder radius="0.04" length="0.06"/>
+        <cylinder radius="${lidar_radius}" length="${lidar_length}"/>
       </geometry>
       <material name="black">
         <color rgba="0.05 0.05 0.05 1.0"/>
@@ -142,25 +165,23 @@
     </visual>
     <collision>
       <geometry>
-        <cylinder radius="0.04" length="0.06"/>
+        <cylinder radius="${lidar_radius}" length="${lidar_length}"/>
       </geometry>
     </collision>
-    <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
-    </inertial>
+    <xacro:cylinder_inertia m="${lidar_mass}" r="${lidar_radius}" h="${lidar_length}"/>
   </link>
 
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child  link="lidar_link"/>
-    <origin xyz="0 0 ${base_height/2 + 0.03}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${base_height/2 + lidar_length/2}" rpy="0 0 0"/>
   </joint>
+
 
   <link name="camera_link">
     <visual>
       <geometry>
-        <box size="0.04 0.08 0.04"/>
+        <box size="${camera_size_x} ${camera_size_y} ${camera_size_z}"/>
       </geometry>
       <material name="dark_gray">
         <color rgba="0.25 0.25 0.25 1.0"/>
@@ -168,13 +189,13 @@
     </visual>
     <collision>
       <geometry>
-        <box size="0.04 0.08 0.04"/>
+        <box size="${camera_size_x} ${camera_size_y} ${camera_size_z}"/>
       </geometry>
     </collision>
-    <inertial>
-      <mass value="0.05"/>
-      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
-    </inertial>
+    <xacro:box_inertia m="${camera_mass}"
+                       x="${camera_size_x}"
+                       y="${camera_size_y}"
+                       z="${camera_size_z}"/>
   </link>
 
   <joint name="camera_joint" type="fixed">
@@ -184,11 +205,13 @@
   </joint>
 
   <link name="camera_optical_frame"/>
+
   <joint name="camera_optical_joint" type="fixed">
     <parent link="camera_link"/>
     <child  link="camera_optical_frame"/>
     <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
   </joint>
+
 
   <gazebo>
     <plugin filename="gz-sim-diff-drive-system"
@@ -215,6 +238,7 @@
       <topic>joint_states</topic>
     </plugin>
   </gazebo>
+
 
   <gazebo reference="lidar_link">
     <sensor name="lidar" type="gpu_lidar">
@@ -252,7 +276,7 @@
       <update_rate>30</update_rate>
       <gz_frame_id>camera_optical_frame</gz_frame_id>
       <camera>
-        <horizontal_fov>1.047</horizontal_fov>  <!-- 60 degrees -->
+        <horizontal_fov>1.047</horizontal_fov> <!-- 60 degrees -->
         <image>
           <width>640</width>
           <height>480</height>
@@ -266,6 +290,19 @@
       <always_on>true</always_on>
       <visualize>false</visualize>
     </sensor>
+  </gazebo>
+
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="lidar_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="camera_link">
+    <material>Gazebo/DarkGrey</material>
   </gazebo>
 
   <gazebo reference="left_wheel">
