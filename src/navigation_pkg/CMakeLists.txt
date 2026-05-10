@@ -20,6 +20,12 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(PROGRAMS 
+  navigation_pkg/patrol_node.py 
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME patrol_node
+)
+
 install(PROGRAMS
   navigation_pkg/webcam_publisher.py 
   DESTINATION lib/${PROJECT_NAME}

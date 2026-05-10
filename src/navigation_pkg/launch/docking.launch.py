@@ -85,6 +85,14 @@ def generate_launch_description():
         }],
     )
 
+    patrol_node = Node(
+        package='navigation_pkg',
+        executable='patrol_node',
+        name='patrol_node',
+        output='screen',
+        parameters= [{'use_sim_time': True}]
+    )
+
     auto_dock_manager = Node(
         package='navigation_pkg',
         executable='auto_dock_manager',
@@ -105,7 +113,7 @@ def generate_launch_description():
     return LaunchDescription([
         simulation,
         TimerAction(period=5.0, actions=[nav2]),
-
+        TimerAction(period=10.0, actions=[patrol_node]),
         rviz,
         person_detector,
         battery_simulator,
