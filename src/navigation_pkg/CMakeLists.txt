@@ -32,6 +32,24 @@ install(PROGRAMS
   RENAME person_detector
 )
 
+install(PROGRAMS
+  navigation_pkg/battery_simulator.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME battery_simulator
+)
+
+install(PROGRAMS
+  navigation_pkg/auto_dock_manager.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME auto_dock_manager
+)
+
+install(PROGRAMS
+  navigation_pkg/dock_pose_broadcaster.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME dock_pose_broadcaster
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

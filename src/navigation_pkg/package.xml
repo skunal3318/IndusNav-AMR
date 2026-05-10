@@ -19,6 +19,8 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <depend>opennav_docking_msgs</depend>
+  <depend>opennav_docking</depend>
   <exec_depend>nav2_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>tf2_msgs</exec_depend>
