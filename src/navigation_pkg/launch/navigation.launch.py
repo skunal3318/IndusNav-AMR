@@ -35,45 +35,6 @@ def generate_launch_description():
             }.items(),
     )
 
-    # keepout_map_server = LifecycleNode(
-    #     package='nav2_map_server',
-    #     executable='map_server',
-    #     name='map_server_keepout',
-    #     namespace='',
-    #     parameters=[{
-    #         'yaml_filename': os.path.join(get_package_share_directory('navigation_pkg'), 'maps', 'keepout_mask.yaml'),
-    #         'topic_name': '/keepout_filter_mask',
-    #         'use_sim_time': True,
-    #     }],
-    #     output='screen',
-    # )
-
-    # costmap_filter_info = LifecycleNode(
-    #     package='nav2_map_server',
-    #     executable='costmap_filter_info_server',
-    #     name='costmap_filter_info_server',
-    #     namespace='',
-    #     parameters=[{
-    #         'type': 0,
-    #         'filter_info_topic': 'costmap_filter_info',
-    #         'mask_topic': '/keepout_filter_mask',
-    #         'use_sim_time': True,
-    #     }],
-    #     output='screen',
-    # )
-    # keepout_lifecycle_manager = Node(
-    #     package='nav2_lifecycle_manager',
-    #     executable='lifecycle_manager',
-    #     name='lifecycle_manager_keepout',
-    #     parameters=[{
-    #         'autostart': True,
-    #         'node_names': ['map_server_keepout', 'costmap_filter_info_server'],
-    #         'use_sim_time': True,
-    #     }],
-    #     output='screen',
-    # )
-
-
     rviz_file = os.path.join(get_package_share_directory('navigation_pkg'), 'rviz', 'rviz_config.rviz')
     #rviz
     rviz = Node(
@@ -96,9 +57,6 @@ def generate_launch_description():
         simulation,
         TimerAction(period=5.0, actions=[nav2]),
         rviz,
-        # keepout_map_server,
-        # costmap_filter_info,
-        # keepout_lifecycle_manager,
         person_detector,
     ])
 

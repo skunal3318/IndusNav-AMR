@@ -242,11 +242,7 @@ global_costmap:
       robot_radius: 0.32
       resolution: 0.05
       track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer", "keepout_filter"]
-      keepout_filter:
-        plugin: "nav2_costmap_2d::KeepoutFilter"
-        enabled: True
-        filter_info_topic: "/costmap_filter_info"
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
         
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
