@@ -6,6 +6,7 @@ from rclpy.action import ActionClient
 from nav2_msgs.action import FollowWaypoints
 from geometry_msgs.msg import PoseStamped, PoseArray
 from std_msgs.msg import String
+from action_msgs.msg import GoalStatus
 from math import sin, cos
 import time
 
@@ -23,9 +24,10 @@ class PatrolNode(Node):
             [-5.0, -8.0,  1.57],
         ]
 
-        self._first_run   = True
-        self._dock_state  = 'IDLE'     
-        self._patrol_active = False    
+        self._first_run     = True
+        self._dock_state    = 'IDLE'     
+        self._patrol_active = False
+        self._goal_handle   = None  # NEW: Keep track of the active goal    
 
         self._wp_publisher = self.create_publisher(PoseArray, '/patrol_waypoints', 10)
 
@@ -39,10 +41,17 @@ class PatrolNode(Node):
         prev = self._dock_state
         self._dock_state = msg.data
 
-        
+        # 1. Battery recharged — resuming patrol
         if prev != 'IDLE' and self._dock_state == 'IDLE' and not self._patrol_active:
             self.get_logger().info('Battery recharged — resuming patrol')
             self.send_points()
+
+        # 2. Battery low — cancelling current patrol to go dock
+        elif prev == 'IDLE' and self._dock_state != 'IDLE' and self._patrol_active:
+            if self._goal_handle is not None:
+                self.get_logger().warn('Low battery detected! Cancelling patrol to allow docking.')
+                self._goal_handle.cancel_goal_async()
+                self._goal_handle = None
 
     def _publish_waypoints(self):
         msg = PoseArray()
@@ -87,20 +96,31 @@ class PatrolNode(Node):
         self._send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
-        goal_handle = future.result()
-        if not goal_handle.accepted:
+        self._goal_handle = future.result()  # NEW: Save the handle so we can cancel it later
+        
+        if not self._goal_handle.accepted:
             self.get_logger().error('Patrol goal rejected by Nav2')
             self._patrol_active = False
+            self._goal_handle = None
             return
+            
         self.get_logger().info('Patrol goal accepted')
-        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future = self._goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.result_callback)
 
     def result_callback(self, future):
         self._patrol_active = False
+        self._goal_handle = None  # Clear the handle
+        
+        status = future.result().status
+        result = future.result().result
 
-        result = future.result()
-        missed = result.result.missed_waypoints
+        # Handle explicit cancellation gracefully
+        if status == GoalStatus.STATUS_CANCELED:
+            self.get_logger().info('Patrol safely cancelled. Handing control to docking server.')
+            return
+
+        missed = getattr(result, 'missed_waypoints', [])
 
         for wp in missed:
             i = wp.index
@@ -128,10 +148,14 @@ class PatrolNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = PatrolNode()
-    node.send_points()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        node.send_points()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
