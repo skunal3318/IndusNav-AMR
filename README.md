@@ -8,6 +8,8 @@ IndusNav-AMR is a simulation reference stack demonstrating advanced warehouse ro
 
 The project showcases how an AMR balances active work (waypoint patrolling) with self-preservation (navigating to a charging station before battery depletion) using custom Python logic and ROS 2 Action Servers.
 
+
+
 ## Core Capabilities
 
 This workspace packages a complete continuous AMR workflow:
