@@ -1,13 +1,6 @@
 <?xml version="1.0" ?>
 <sdf version="1.9">
   <world name="industrial_world">
-
-    <!-- ============================================================
-         PHYSICS + REQUIRED SYSTEM PLUGINS
-         Every Gazebo Harmonic world needs these four plugins.
-         Sensors plugin enables lidar/camera simulation.
-         UserCommands plugin enables robot spawning via ros_gz_sim.
-         ============================================================ -->
     <physics name="default_physics" type="ode">
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1.0</real_time_factor>
@@ -28,9 +21,6 @@
     <plugin filename="gz-sim-user-commands-system"
             name="gz::sim::systems::UserCommands"/>
 
-    <!-- ============================================================
-         LIGHTING
-         ============================================================ -->
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
@@ -39,9 +29,6 @@
       <direction>-0.5 0.1 -0.9</direction>
     </light>
 
-    <!-- ============================================================
-         GROUND PLANE — concrete-coloured warehouse floor
-         ============================================================ -->
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
@@ -76,9 +63,6 @@
       </link>
     </model>
 
-    <!-- ============================================================
-         WAREHOUSE WALLS — 20x20m footprint, 3m high
-         ============================================================ -->
     <model name="wall_north">
       <static>true</static>
       <pose>0 10 1.5 0 0 0</pose>
@@ -127,10 +111,6 @@
       </link>
     </model>
 
-    <!-- ============================================================
-         STORAGE RACKS — left side of warehouse (x < 0)
-         Robot patrol path will run between these and the right wall.
-         ============================================================ -->
     <model name="rack_1">
       <static>true</static>
       <pose>-6 7 0.9 0 0 0</pose>
@@ -179,9 +159,6 @@
       </link>
     </model>
 
-    <!-- ============================================================
-         SUPPORT PILLARS — structural columns along centre line
-         ============================================================ -->
     <model name="pillar_nw">
       <static>true</static>
       <pose>-3 8 1.5 0 0 0</pose>
@@ -206,11 +183,6 @@
       </link>
     </model>
 
-    <!-- ============================================================
-         DANGER ZONE — right side of warehouse (x = 4..8, y = -3..3)
-         This red floor marker is a visual indicator only (no collision).
-         Zone monitor node (Week 4) will use these coordinates.
-         ============================================================ -->
     <model name="danger_zone_marker">
       <static>true</static>
       <pose>6 0 0.005 0 0 0</pose>
@@ -226,10 +198,6 @@
       </link>
     </model>
 
-    <!-- ============================================================
-         MACHINERY — heavy equipment inside the danger zone.
-         This is what the robot is guarding access to.
-         ============================================================ -->
     <model name="machinery_a">
       <static>true</static>
       <pose>7.5 0 0.75 0 0 0</pose>
@@ -254,9 +222,6 @@
       </link>
     </model>
 
-    <!-- ============================================================
-         SCATTER OBSTACLES — a few crates for lidar test richness
-         ============================================================ -->
     <model name="crate_1">
       <static>true</static>
       <pose>0 7 0.3 0 0 0.4</pose>
