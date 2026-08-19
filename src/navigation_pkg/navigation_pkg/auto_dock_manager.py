@@ -12,37 +12,29 @@ class AutoDockManager(Node):
     def __init__(self):
         super().__init__('auto_dock_manager')
         
-        # State & Config
         self.state = 'IDLE'
         self.low_battery_threshold = 0.20
         self.full_battery_threshold = 0.95
         
-        # Publishers
         self.state_pub = self.create_publisher(String, '/dock_manager_state', 10)
         self.charging_pub = self.create_publisher(Bool, '/is_charging', 10)
         
-        # Subscriptions
         self.create_subscription(BatteryState, '/battery_state', self.battery_cb, 10)
         
-        # Action Clients
         self._dock_client = ActionClient(self, DockRobot, 'dock_robot')
         self._undock_client = ActionClient(self, UndockRobot, 'undock_robot')
         
-        # Nav2 Commander (to cancel existing goals)
         self.navigator = BasicNavigator()
 
-        # Timer for state heartbeat
         self.create_timer(1.0, self.timer_cb)
         self.get_logger().info("Auto Dock Manager started and waiting...")
 
     def battery_cb(self, msg):
-        # Only trigger if IDLE and battery is low
         if self.state == 'IDLE' and msg.percentage <= self.low_battery_threshold:
             self.get_logger().warn(f"Battery Low ({msg.percentage*100}%). Starting Docking sequence.")
             self.state = 'LOW_BATTERY'
             threading.Thread(target=self.execute_docking).start()
             
-        # Trigger undock if CHARGING and battery is full
         elif self.state == 'CHARGING' and msg.percentage >= self.full_battery_threshold:
             self.get_logger().info("Battery Full. Starting Undocking.")
             self.state = 'UNDOCKING'
@@ -53,17 +45,14 @@ class AutoDockManager(Node):
         msg.data = self.state
         self.state_pub.publish(msg)
         
-        # Ensure simulator knows if we are charging
         charge_msg = Bool()
         charge_msg.data = (self.state == 'CHARGING')
         self.charging_pub.publish(charge_msg)
 
     def execute_docking(self):
-        # 1. Stop all current Nav2 missions
         self.get_logger().info("Cancelling active navigation goals...")
         self.navigator.cancelTask()
         
-        # 2. Call Dock Action
         self.state = 'DOCKING'
         if not self._dock_client.wait_for_server(timeout_sec=5.0):
             self.get_logger().error("Docking server not available!")
@@ -72,12 +61,11 @@ class AutoDockManager(Node):
 
         goal_msg = DockRobot.Goal()
         goal_msg.use_dock_id = True
-        goal_msg.dock_id = 'home_dock' # Ensure this matches your params.yaml
+        goal_msg.dock_id = 'home_dock' 
 
         self.get_logger().info("Sending Docking Goal...")
         send_goal_future = self._dock_client.send_goal_async(goal_msg)
         
-        # Using a simple block for the thread
         while not send_goal_future.done():
             pass
         
