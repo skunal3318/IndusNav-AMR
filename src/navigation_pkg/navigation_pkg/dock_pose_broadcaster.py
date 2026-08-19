@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-"""
-dock_pose_broadcaster.py
-Broadcasts the charging station pose as a TF frame and as a PoseStamped topic.
-
-TF published:  map → charging_dock
-
-Topics:
-  /charging_dock_pose  (geometry_msgs/PoseStamped)  
-"""
-
 import math
 import rclpy
 from rclpy.node import Node
