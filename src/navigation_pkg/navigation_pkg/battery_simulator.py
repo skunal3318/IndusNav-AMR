@@ -1,15 +1,4 @@
 #!/usr/bin/env python3
-"""
-battery_simulator.py
-Simulates a robot battery that drains while operating and recharges while docked.
-
-Publishes:
-  /battery_state  (sensor_msgs/BatteryState)
-
-Subscribes:
-  /is_charging    (std_msgs/Bool)  — set true by auto_dock_manager while docked
-"""
-
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import BatteryState
