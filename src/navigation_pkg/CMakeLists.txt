@@ -27,18 +27,6 @@ install(PROGRAMS
 )
 
 install(PROGRAMS
-  navigation_pkg/webcam_publisher.py 
-  DESTINATION lib/${PROJECT_NAME}
-  RENAME webcam_publisher
-)
-
-install(PROGRAMS
-  navigation_pkg/person_detector.py 
-  DESTINATION lib/${PROJECT_NAME}
-  RENAME person_detector
-)
-
-install(PROGRAMS
   navigation_pkg/battery_simulator.py
   DESTINATION lib/${PROJECT_NAME}
   RENAME battery_simulator

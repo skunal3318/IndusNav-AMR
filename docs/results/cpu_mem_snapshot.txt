@@ -1,0 +1,11 @@
+    PID COMMAND         %CPU %MEM
+  16656 component_conta  126  1.2
+  16425 ruby            97.9  1.9
+  16426 ruby            87.1  2.4
+  16773 python3         77.3  0.6
+  16377 parameter_bridg 73.0  0.4
+  16380 python3         58.5  0.5
+  16381 python3         55.9  0.5
+  16378 rviz2           38.7  1.3
+   6608 brave           28.1  2.7
+12
