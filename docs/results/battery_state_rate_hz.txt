@@ -1,0 +1,13 @@
+[WARN] [1792030304.467213273] [rcl]: ROS_LOCALHOST_ONLY is deprecated but still honored if it is enabled. Use ROS_AUTOMATIC_DISCOVERY_RANGE and ROS_STATIC_PEERS instead.
+[WARN] [1792030304.467246455] [rcl]: 'localhost_only' is enabled, 'automatic_discovery_range' and 'static_peers' will be ignored.
+WARNING: topic [/battery_state] does not appear to be published yet
+average rate: 9.280
+	min: 0.098s max: 0.118s std dev: 0.00595s window: 11
+average rate: 9.305
+	min: 0.094s max: 0.118s std dev: 0.00651s window: 21
+average rate: 9.790
+	min: 0.064s max: 0.119s std dev: 0.01485s window: 32
+average rate: 9.774
+	min: 0.064s max: 0.119s std dev: 0.01452s window: 42
+average rate: 9.779
+	min: 0.064s max: 0.122s std dev: 0.01515s window: 52
